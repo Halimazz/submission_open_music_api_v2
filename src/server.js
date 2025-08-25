@@ -1,7 +1,7 @@
-// const Hapi = require("@hapi/hapi");
-import dotenv from "dotenv";
-import Hapi from "@hapi/hapi";
-import songs from "./api/songs/index.js"; // Ganti './api/songs' dengan './api/songs/index.js' jika file tersebut
+// require("dotenv").config();
+import "dotenv/config";
+import Hapi from '@hapi/hapi';
+import songs from "./api/songs/index.js";
 import SongsService from "./services/postgres/SongsService.js";
 import SongsValidator from "./validator/songs/index.js";
 

@@ -15,4 +15,5 @@ const mappingDBToModel = ({
   duration,
   albumId: album_id,
 });
-module.exports = { mappingDBToModel };
+// module.exports = { mappingDBToModel };
+export { mappingDBToModel };

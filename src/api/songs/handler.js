@@ -1,4 +1,5 @@
-const ClientError = require("../../exceptions/ClientError");
+// const ClientError = require("../../exceptions/ClientError");
+import ClientError from "../../exceptions/ClientError.js";
 
 class SongsHandler {
   constructor(service, validator) {
@@ -61,4 +62,5 @@ class SongsHandler {
   async deleteSongHandler(request, h) {}
 }
 
-module.exports = SongsHandler;
+// module.exports = SongsHandler;
+export default SongsHandler;

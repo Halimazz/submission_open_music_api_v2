@@ -1,5 +1,7 @@
-const SongHandlers = require("./handler");
-const routes = require("./routes");
+// const SongHandlers = require("./handler");
+import SongHandlers from "./handler.js";
+// const routes = require("./routes");
+import routes from "./routes.js";
 
 const songs = {
   name: "songs",
@@ -9,4 +11,5 @@ const songs = {
     server.route(routes(songHandlers));
   },
 };
-exports.songs = songs;
+// exports.songs = songs;
+export default songs;
