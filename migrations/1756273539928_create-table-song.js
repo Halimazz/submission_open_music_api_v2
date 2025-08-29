@@ -1,41 +1,44 @@
-exports.shorthands = undefined;
-
-exports.up = (pgm) => {
-  pgm.createTable("songs", {
+export const up = (pgm) => {
+  pgm.createTable('songs', {
     id: {
-      type: "VARCHAR(50)",
+      type: 'VARCHAR(50)',
       primaryKey: true,
     },
     title: {
-      type: "TEXT",
+      type: 'TEXT',
       notNull: true,
     },
     year: {
-      type: "INT",
+      type: 'INT',
       notNull: true,
     },
     performer: {
-      type: "TEXT",
+      type: 'TEXT',
       notNull: true,
     },
     genre: {
-      type: "TEXT",
+      type: 'TEXT',
     },
     duration: {
-      type: "INT",
+      type: 'INT',
     },
     inserted_at: {
-      type: "TEXT",
+      type: 'TEXT',
+      notNull: true,
+    },
+    updated_at: {
+      type: 'TEXT',
       notNull: true,
     },
     album_id: {
-      type: "VARCHAR(50)",
-      references: '"albums"',
-      onDelete: "CASCADE",
-      onUpdate: "CASCADE",
+      type: 'VARCHAR(50)',
+      references: 'albums',
+      onDelete: 'CASCADE',
+      onUpdate: 'CASCADE',
     },
   });
-}
-exports.down = (pgm) => {
-    pgm.dropTable("songs");
-}
+};
+
+export const down = (pgm) => {
+  pgm.dropTable('songs');
+};
