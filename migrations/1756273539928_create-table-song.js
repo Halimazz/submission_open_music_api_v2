@@ -24,6 +24,10 @@ exports.up = (pgm) => {
     duration: {
       type: "INT",
     },
+    inserted_at: {
+      type: "TEXT",
+      notNull: true,
+    },
     album_id: {
       type: "VARCHAR(50)",
       references: '"albums"',

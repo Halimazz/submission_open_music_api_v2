@@ -1,11 +1,9 @@
-// const ClientError = require("../../exceptions/ClientError");
-import ClientError from "../../exceptions/ClientError.js";
-
 class SongsHandler {
   constructor(service, validator) {
     this._service = service;
     this._validator = validator;
 
+    // binding semua method dengan benar
     this.postSongHandler = this.postSongHandler.bind(this);
     this.getSongHandler = this.getSongHandler.bind(this);
     this.getSongByIdHandler = this.getSongByIdHandler.bind(this);
@@ -15,141 +13,104 @@ class SongsHandler {
 
   async postSongHandler(request, h) {
     try {
-      this._validator.validateSongPayload(request.payload);
-      const { title, year, performer, genre, duration } = request.payload;
-      const songId = await this._service.addSong({
-        title,
-        year,
-        performer,
-        genre,
-        duration,
-      });
+      const payload = request.payload;
+
+      // validasi payload
+      if (Array.isArray(payload)) {
+        payload.forEach((song) => this._validator.validateSongPayload(song));
+      } else {
+        this._validator.validateSongPayload(payload);
+      }
+
+      // simpan lagu (single atau bulk)
+      const songIds = await this._service.addMusic(payload);
+
+      // response sukses
       const response = h.response({
         status: "success",
-        message: "Song successfully added",
-        data: {
-          songId,
-        },
+        message: Array.isArray(payload)
+          ? "Songs successfully added"
+          : "Song successfully added",
+        data: { songIds },
       });
       response.code(201);
       return response;
     } catch (error) {
-      if (error instanceof ClientError) {
+      console.error("🔥 ERROR in postSongHandler:", error);
+
+      // kalau error dari client (bad request / invariant / not found)
+      if (error.name === "InvariantError" || error.name === "ClientError") {
         const response = h.response({
           status: "fail",
           message: error.message,
         });
-        response.code(error.statusCode);
+        response.code(error.statusCode || 400);
         return response;
       }
 
-      // 500 Server ERROR!!
+      // kalau error internal server
       const response = h.response({
         status: "error",
         message: "Maaf, terjadi kegagalan pada server kami.",
       });
       response.code(500);
-      console.error(error);
+      return response;
     }
   }
 
-  async getSongHandler() {
-    const songs = await this._service.getSongs();
+  async getSongHandler(request, h) {
+    const { title, performer } = request.query;
+    const songs = await this._service.getMusics({ title, performer });
+    const response = h.response({
+      status: "success",
+      data: { songs },
+    });
+    return response;
+  }
+
+  async getSongByIdHandler(request) {
+    const { id } = request.params;
+    const song = await this._service.getMusicById(id);
     return {
       status: "success",
-      data: {
-        songs,
-      },
+      data: { song },
     };
   }
 
-  async getSongByIdHandler(request, h) {
-    const { id } = request.params;
-    try {
-      const song = await this._service.getSongById(id);
-      return {
-        status: "success",
-        data: {
-          song,
-        },
-      };
-    } catch (error) {
-      if (error instanceof ClientError) {
-        const response = h.response({
-          status: "fail",
-          message: error.message,
-        });
-        response.code(error.statusCode);
-        return response;
-      }
-
-      // 500 Server ERROR!!
-      const response = h.response({
-        status: "error",
-        message: "Sorry, there was a failure on our server.",
-      });
-      response.code(500);
-      console.error(error);
-    }
-  }
-
   async putSongHandler(request, h) {
-    try {
-      this._validator.validateSongPayload(request.payload);
-      const { id } = request.params;
-      await this._service.editSongById(id, request.payload);
-      return {
-        status: "success",
-        message: "Song successfully updated",
-      };
-    } catch (error) {
-      if (error instanceof ClientError) {
-        const response = h.response({
-          status: "fail",
-          message: error.message,
-        });
-        response.code(error.statusCode);
-        return response;
-      }
+    this._validator.validateSongPayload(request.payload);
+    const { id } = request.params;
+    const { title, year, performer, genre, duration, albumId } =
+      request.payload;
+    const response = h.response({
+      status: "success",
+      message: "Song successfully updated",
+    });
 
-      // 500 Server ERROR!!
-      const response = h.response({
-        status: "error",
-        message: "Sorry, there was a failure on our server.",
-      });
-      response.code(500);
-      console.error(error);
-    }
+    await this._service.editMusicById(id, {
+      title,
+      year,
+      performer,
+      genre,
+      duration,
+      albumId,
+    });
+
+    return {
+      status: "success",
+      message: "Song successfully updated",
+    };
   }
 
   async deleteSongHandler(request, h) {
-    try {
-      const { id } = request.params;
-      await this._service.deleteSongById(id);
-      return {
-        status: "success",
-        message: "Song successfully deleted",
-      };
-    } catch (error) {
-      if (error instanceof ClientError) {
-        const response = h.response({
-          status: "fail",
-          message: error.message,
-        });
-        response.code(error.statusCode);
-        return response;
-      }
-
-      // 500 Server ERROR!!
-      const response = h.response({
-        status: "error",
-        message: "Sorry, there was a failure on our server.",
-      });
-      response.code(500);
-      console.error(error);
-    }
+    const { id } = request.params;
+    await this._service.deleteMusicById(id);
+    const response = h.response({
+      status: "success",
+      message: "Song successfully deleted",
+    });
+    return response;
   }
 }
 
-// module.exports = SongsHandler;
 export default SongsHandler;

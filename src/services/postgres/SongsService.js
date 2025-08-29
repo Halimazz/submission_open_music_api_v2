@@ -3,46 +3,72 @@ import { nanoid } from "nanoid";
 import { Pool } from "pg";
 import InvariantError from "../../exceptions/InvariantError.js";
 import NotFoundError from "../../exceptions/NotFoundError.js";
-import { mappingDBToModel } from "../../utils/index.js";
+import { mappingDBToModelDetail } from "../../utils/index.js";
 
 class SongsService {
   constructor() {
     this._pool = new Pool();
   }
 
-  async addMusic({ title, year, performer, genre, duration, albumId }) {
-    const id = "song-" + nanoid(16);
-    const insertedAt = new Date().toISOString();
-    const updatedAt = insertedAt;
+  async addMusic(songs) {
+    // pastikan input array
+    const songsArray = Array.isArray(songs) ? songs : [songs];
 
-    const query = {
-      text: "INSERT INTO songs (id, title, year, performer, genre, duration, album_id, inserted_at, updated_at) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id",
-      values: [
-        id,
-        title,
-        year,
-        performer,
-        genre,
-        duration,
-        albumId,
-        insertedAt,
-        updatedAt,
-      ],
-    };
+    const insertedIds = [];
 
-    const result = await this._pool.query(query);
+    for (const song of songsArray) {
+      const id = "song-" + nanoid(16);
+      const insertedAt = new Date().toISOString();
+      const updatedAt = insertedAt;
 
-    if (!result.rows[0].id) {
-      throw new InvariantError("Song failed to add");
+      const query = {
+        text: `INSERT INTO songs 
+             (id, title, year, performer, genre, duration, album_id, inserted_at, updated_at) 
+             VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id`,
+        values: [
+          id,
+          song.title,
+          song.year,
+          song.performer,
+          song.genre,
+          song.duration,
+          song.albumId,
+          insertedAt,
+          updatedAt,
+        ],
+      };
+
+      const result = await this._pool.query(query);
+
+      if (!result.rows[0].id) {
+        throw new InvariantError("Song failed to add");
+      }
+
+      insertedIds.push(result.rows[0].id);
     }
 
-    return result.rows[0].id;
+    return insertedIds.length === 1 ? insertedIds[0] : insertedIds;
   }
 
-  async getMusics() {
-    const result = await this._pool.query(
-      "SELECT id, title, performer FROM songs"
-    );
+  async getMusics({ title, performer } = {}) {
+    let baseQuery = "SELECT id, title, performer FROM songs";
+    const queryParams = [];
+    const value = [];
+    if (title) {
+      value.push(`%${title}%`);
+      queryParams.push(`title ILIKE $${queryParams.length + 1}`);
+    }
+    if (performer) {
+      value.push(`%${performer}%`);
+      queryParams.push(`performer ILIKE $${queryParams.length + 1}`);
+    }
+    if (queryParams.length) {
+      baseQuery += ` WHERE ${queryParams.join(" AND ")}`;
+    }
+    const result = await this._pool.query({
+      text: baseQuery,
+      values: value,
+    });
     return result.rows;
   }
 
@@ -57,7 +83,7 @@ class SongsService {
       throw new NotFoundError("Song not found");
     }
 
-    return mappingDBToModel(result.rows[0]);
+    return mappingDBToModelDetail(result.rows[0]);
   }
 
   async editMusicById(

@@ -1,4 +1,10 @@
-const mappingDBToModel = ({
+const mappingDBSongsToModel = ({ id, title, performer }) => ({
+  id,
+  title,
+  performer,
+});
+
+const mappingDBToModelDetail = ({
   id,
   title,
   year,
@@ -15,5 +21,14 @@ const mappingDBToModel = ({
   duration,
   albumId: album_id,
 });
-// module.exports = { mappingDBToModel };
-export { mappingDBToModel };
+const mappingDBAlbumsToModel = ({ id, name, year }) => ({
+  id,
+  name,
+  year,
+});
+// module.exports = { mappingDBToModelDetail };
+export {
+  mappingDBToModelDetail,
+  mappingDBSongsToModel,
+  mappingDBAlbumsToModel,
+};
