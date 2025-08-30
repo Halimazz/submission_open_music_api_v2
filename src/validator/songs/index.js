@@ -3,12 +3,13 @@ import InvariantError from "../../exceptions/InvariantError.js";
 
 const SongsValidator = {
   validateSongPayload: (payload) => {
-    const validationResult = songPayloadSchema.validate(payload);
-    if (validationResult.error) {
-      throw new InvariantError(validationResult.error.message);
+    const { error } = songPayloadSchema.validate(payload, {
+      abortEarly: false,
+    });
+    if (error) {
+      throw new InvariantError(error.details[0].message);
     }
   },
 };
 
-// module.exports = SongsValidator;
 export default SongsValidator;

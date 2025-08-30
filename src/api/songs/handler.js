@@ -1,3 +1,6 @@
+import InvariantError from "../../exceptions/InvariantError.js";
+import ClientError from "../../exceptions/ClientError.js";
+
 class SongsHandler {
   constructor(service, validator) {
     this._service = service;
@@ -13,59 +16,40 @@ class SongsHandler {
 
   async postSongHandler(request, h) {
     try {
-      const payload = request.payload;
+      const { payload } = request;
 
       // validasi payload
-      if (Array.isArray(payload)) {
-        payload.forEach((song) => this._validator.validateSongPayload(song));
-      } else {
-        this._validator.validateSongPayload(payload);
-      }
+      this._validator.validateSongPayload(payload);
 
-      // simpan lagu (single atau bulk)
-      const result = await this._service.addMusic(payload);
+      // simpan lagu (single insert)
+      const songId = await this._service.addMusic(payload);
 
       // response sukses
-      let responseBody;
-      if (Array.isArray(payload)) {
-        // bulk insert
-        responseBody = {
-          status: "success",
-          message: "Songs successfully added",
-          data: { songIds: result }, // array of IDs
-        };
-      } else {
-        // single insert
-        responseBody = {
-          status: "success",
-          message: "Song successfully added",
-          data: { songId: result }, // single string ID
-        };
-      }
-
-      const response = h.response(responseBody);
+      const response = h.response({
+        status: "success",
+        message: "Song successfully added",
+        data: { songId },
+      });
       response.code(201);
       return response;
     } catch (error) {
       console.error("ERROR in postSongHandler:", error);
 
-      // kalau error dari client (bad request / invariant / not found)
-      if (error.name === "InvariantError" || error.name === "ClientError") {
-        const response = h.response({
-          status: "fail",
-          message: error.message,
-        });
-        response.code(error.statusCode || 400);
-        return response;
+      if (error instanceof InvariantError || error instanceof ClientError) {
+        return h
+          .response({
+            status: "fail",
+            message: error.message,
+          })
+          .code(400);
       }
 
-      // kalau error internal server
-      const response = h.response({
-        status: "error",
-        message: "Maaf, terjadi kegagalan pada server kami.",
-      });
-      response.code(500);
-      return response;
+      return h
+        .response({
+          status: "error",
+          message: "Maaf, terjadi kegagalan pada server kami.",
+        })
+        .code(500);
     }
   }
 
