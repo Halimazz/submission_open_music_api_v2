@@ -2,10 +2,14 @@ import { albumPayloadSchema } from "./schema.js";
 import InvariantError from "../../exceptions/InvariantError.js";
 const AlbumsValidator = {
   validateAlbumPayload: (payload) => {
-    const validationResult = albumPayloadSchema.validate(payload);
-    if (validationResult.error) {
-      throw new InvariantError(validationResult.error.message);
+    const { error, value } = albumPayloadSchema.validate(payload);
+
+    if (error) {
+      // lempar error kalau payload tidak sesuai
+      throw new InvariantError(error.message);
     }
+
+    return value; // kembalikan payload yang sudah tervalidasi
   },
 };
 export default AlbumsValidator;

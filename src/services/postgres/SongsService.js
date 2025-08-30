@@ -10,44 +10,35 @@ class SongsService {
     this._pool = new Pool();
   }
 
-  async addMusic(songs) {
-    // pastikan input array
-    const songsArray = Array.isArray(songs) ? songs : [songs];
+  async addMusic(song) {
+    const id = "song-" + nanoid(16);
+    const insertedAt = new Date().toISOString();
+    const updatedAt = insertedAt;
 
-    const insertedIds = [];
+    const query = {
+      text: `INSERT INTO songs 
+           (id, title, year, performer, genre, duration, album_id, inserted_at, updated_at) 
+           VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id`,
+      values: [
+        id,
+        song.title,
+        song.year,
+        song.performer,
+        song.genre,
+        song.duration,
+        song.albumId,
+        insertedAt,
+        updatedAt,
+      ],
+    };
 
-    for (const song of songsArray) {
-      const id = "song-" + nanoid(16);
-      const insertedAt = new Date().toISOString();
-      const updatedAt = insertedAt;
+    const result = await this._pool.query(query);
 
-      const query = {
-        text: `INSERT INTO songs 
-             (id, title, year, performer, genre, duration, album_id, inserted_at, updated_at) 
-             VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id`,
-        values: [
-          id,
-          song.title,
-          song.year,
-          song.performer,
-          song.genre,
-          song.duration,
-          song.albumId,
-          insertedAt,
-          updatedAt,
-        ],
-      };
-
-      const result = await this._pool.query(query);
-
-      if (!result.rows[0].id) {
-        throw new InvariantError("Song failed to add");
-      }
-
-      insertedIds.push(result.rows[0].id);
+    if (!result.rows[0]?.id) {
+      throw new InvariantError("Song failed to add");
     }
 
-    return insertedIds.length === 1 ? insertedIds[0] : insertedIds;
+    return result.rows[0].id; // selalu return string (songId)
   }
 
   async getMusics({ title, performer } = {}) {
