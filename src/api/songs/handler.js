@@ -139,10 +139,7 @@ class SongsHandler {
         albumId,
       });
 
-      return {
-        status: "success",
-        message: "Song successfully updated",
-      };
+      return response;
     } catch (error) {
       console.error("ERROR in putSongHandler:", error);
       if (error.name === "NotFoundError") {
