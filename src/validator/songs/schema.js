@@ -9,14 +9,14 @@ const songPayloadSchema = Joi.object({
     .max(new Date().getFullYear())
     .required(),
   performer: Joi.string().required(),
-  genre: Joi.string().optional(),
+  genre: Joi.string().required(),
   duration: Joi.number().integer().min(1).optional(),
   albumId: Joi.string().optional(),
 }).required();
 
 // fungsi validasi
 function validateSongPayload(payload) {
-  const { error } = songPayloadSchema.validate(payload);
+  const { error } = songPayloadSchema.validate(payload, { abortEarly: false });
   if (error) {
     throw new InvariantError(error.message);
   }

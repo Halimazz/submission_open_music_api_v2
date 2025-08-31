@@ -16,26 +16,22 @@ class SongsHandler {
 
   async postSongHandler(request, h) {
     try {
-      const { payload } = request;
+      const payload = request.payload;
 
-      // validasi payload
       this._validator.validateSongPayload(payload);
 
-      // simpan lagu (single insert)
       const songId = await this._service.addMusic(payload);
 
-      // response sukses
-      const response = h.response({
-        status: "success",
-        message: "Song successfully added",
-        data: { songId },
-      });
-      response.code(201);
-      return response;
+    
+      return h
+        .response({
+          status: "success",
+          message: "Song successfully added",
+          data: { songId },
+        })
+        .code(201);
     } catch (error) {
-      console.error("ERROR in postSongHandler:", error);
-
-      if (error instanceof InvariantError || error instanceof ClientError) {
+      if (error instanceof ClientError) {
         return h
           .response({
             status: "fail",
@@ -44,6 +40,7 @@ class SongsHandler {
           .code(400);
       }
 
+      console.error(error);
       return h
         .response({
           status: "error",
