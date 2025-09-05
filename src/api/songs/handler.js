@@ -31,7 +31,7 @@ class SongsHandler {
         })
         .code(201);
     } catch (error) {
-      if (error instanceof ClientError) {
+      if (error instanceof InvariantError || error instanceof ClientError) {
         return h
           .response({
             status: "fail",
