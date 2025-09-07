@@ -1,18 +1,46 @@
 import "dotenv/config";
 import Hapi from "@hapi/hapi";
+import Jwt from "@hapi/jwt";
+
+// songs
 import songs from "./api/songs/index.js";
 import SongsService from "./services/postgres/SongsService.js";
 import SongsValidator from "./validator/songs/index.js";
 
+// albums
 import albums from "./api/albums/index.js";
 import AlbumsService from "./services/postgres/AlbumsService.js";
 import AlbumsValidator from "./validator/albums/index.js";
+
+//users
+import users from "./api/users/index.js";
+import UsersService from "./services/postgres/UsersService.js";
+import UsersValidator from "./validator/users/index.js";
+
+//Authentications
+import authentications from "./api/authentications/index.js";
+import AuthenticationsService from "./services/postgres/AuthenticationsService.js";
+import TokenManager from "./tokenize/TokenManager.js";
+import AuthenticationsValidator from "./validator/authentications/index.js";
+// Playlists
+import playlists from "./api/playlists/index.js";
+import PlaylistsService from "./services/postgres/PlaylistsService.js";
+import PlaylistsValidator from "./validator/playlists/index.js";
+import PlaylistSongsValidator from "./validator/playlist-song/index.js";
+// Collaborations
+import collaborations from "./api/collaborations/index.js";
+import CollaborationsService from "./services/postgres/CollaborationsService.js";
+import CollaborationsValidator from "./validator/collaborations/index.js";
 
 const { PORT, HOST } = process.env;
 
 const init = async () => {
   const songsService = new SongsService();
   const albumsService = new AlbumsService();
+  const usersService = new UsersService();
+  const authenticationsService = new AuthenticationsService();
+  const collaborationsService = new CollaborationsService();
+  const playlistsService = new PlaylistsService(collaborationsService);
 
   const server = Hapi.server({
     port: PORT,
@@ -22,6 +50,23 @@ const init = async () => {
         origin: ["*"],
       },
     },
+  });
+  await server.register(Jwt);
+  // define strategy
+  server.auth.strategy("openmusic_jwt", "jwt", {
+    keys: process.env.ACCESS_TOKEN_KEY,
+    verify: {
+      aud: false,
+      iss: false,
+      sub: false,
+      maxAgeSec: process.env.ACCESS_TOKEN_AGE,
+    },
+    validate: (artifacts) => ({
+      isValid: true,
+      credentials: {
+        id: artifacts.decoded.payload.id,
+      },
+    }),
   });
 
   server.ext("onPreResponse", (request, h) => {
@@ -55,6 +100,7 @@ const init = async () => {
 
   try {
     await server.register([
+      //start plugin eksternal
       {
         plugin: songs,
         options: {
@@ -69,6 +115,39 @@ const init = async () => {
           validator: AlbumsValidator,
         },
       },
+      {
+        plugin: users,
+        options: {
+          service: usersService,
+          validator: UsersValidator,
+        },
+      },
+      {
+        plugin: authentications,
+        options: {
+          authenticationsService,
+          usersService,
+          TokenManager,
+          validator: AuthenticationsValidator,
+        },
+      },
+      {
+        plugin: playlists,
+        options: {
+          service: playlistsService,
+          validator: PlaylistsValidator,
+          playlistSongsValidator: PlaylistSongsValidator,
+        },
+      },
+      {
+        plugin: collaborations,
+        options: {
+          service: collaborationsService,
+          playlistsService,
+          validator: CollaborationsValidator,
+        },
+      },
+      //end plugin eksternal (jangan tambahkan kode dibawah komentar ini)
     ]);
 
     await server.start();

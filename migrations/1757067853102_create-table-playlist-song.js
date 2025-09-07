@@ -9,35 +9,38 @@ export const shorthands = undefined;
  * @returns {Promise<void> | void}
  */
 export const up = (pgm) => {
-  pgm.createTable("users", {
+  pgm.createTable("playlist_songs", {
     id: {
       type: "VARCHAR(50)",
       primaryKey: true,
     },
-    username: {
+    playlist_id: {
       type: "VARCHAR(50)",
       notNull: true,
-      unique: true,
     },
-    password: {
-      type: "TEXT",
+    song_id: {
+      type: "VARCHAR(50)",
       notNull: true,
-    },
-    fullname: {
-      type: "TEXT",
-      notNull: true,
-    },
-    created_at: {
-      type: "TIMESTAMP",
-      notNull: true,
-      default: pgm.func("current_timestamp"),
-    },
-    updated_at: {
-      type: "TIMESTAMP",
-      notNull: true,
-      default: pgm.func("current_timestamp"),
     },
   });
+
+  pgm.addConstraint(
+    "playlist_songs",
+    "fk_playlist_songs.playlist_id_playlists.id",
+    "FOREIGN KEY(playlist_id) REFERENCES playlists(id) ON DELETE CASCADE"
+  );
+
+  pgm.addConstraint(
+    "playlist_songs",
+    "fk_playlist_songs.song_id_songs.id",
+    "FOREIGN KEY(song_id) REFERENCES songs(id) ON DELETE CASCADE"
+  );
+
+  pgm.addConstraint(
+    "playlist_songs",
+    "unique_playlist_song",
+    "UNIQUE(playlist_id, song_id)"
+  );
 };
 
 /**
@@ -46,5 +49,5 @@ export const up = (pgm) => {
  * @returns {Promise<void> | void}
  */
 export const down = (pgm) => {
-    pgm.dropTable("users");
+    pgm.dropTable("playlist_songs");
 };

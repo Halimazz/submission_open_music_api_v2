@@ -9,22 +9,17 @@ export const shorthands = undefined;
  * @returns {Promise<void> | void}
  */
 export const up = (pgm) => {
-  pgm.createTable("users", {
+  pgm.createTable("playlist_collaborations", {
     id: {
       type: "VARCHAR(50)",
       primaryKey: true,
     },
-    username: {
+    playlist_id: {
       type: "VARCHAR(50)",
       notNull: true,
-      unique: true,
     },
-    password: {
-      type: "TEXT",
-      notNull: true,
-    },
-    fullname: {
-      type: "TEXT",
+    user_id: {
+      type: "VARCHAR(50)",
       notNull: true,
     },
     created_at: {
@@ -32,12 +27,25 @@ export const up = (pgm) => {
       notNull: true,
       default: pgm.func("current_timestamp"),
     },
-    updated_at: {
-      type: "TIMESTAMP",
-      notNull: true,
-      default: pgm.func("current_timestamp"),
-    },
   });
+
+  pgm.addConstraint(
+    "playlist_collaborations",
+    "fk_playlist_collaborations.playlist_id_playlists_id",
+    "FOREIGN KEY(playlist_id) REFERENCES playlists(id) ON DELETE CASCADE"
+  );
+
+  pgm.addConstraint(
+    "playlist_collaborations",
+    "fk_playlist_collaborations.user_id_users_id",
+    "FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE"
+  );
+
+  pgm.addConstraint(
+    "playlist_collaborations",
+    "unique_playlist_collaboration",
+    "UNIQUE(playlist_id, user_id)"
+  );
 };
 
 /**
@@ -46,5 +54,5 @@ export const up = (pgm) => {
  * @returns {Promise<void> | void}
  */
 export const down = (pgm) => {
-    pgm.dropTable("users");
+  pgm.dropTable("playlist_collaborations");
 };
