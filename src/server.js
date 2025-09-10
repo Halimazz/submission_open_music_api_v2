@@ -143,7 +143,7 @@ const init = async () => {
         plugin: collaborations,
         options: {
           service: collaborationsService,
-          playlistsService,
+          playlistsService, // dipakai untuk verify owner
           validator: CollaborationsValidator,
         },
       },

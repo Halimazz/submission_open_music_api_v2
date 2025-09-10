@@ -127,11 +127,13 @@ class PlaylistsService {
             playlistId,
             userId
           );
-        } catch {
-          throw error;
+        } catch (collabError) {
+          throw new AuthorizationError(
+            "Anda tidak berhak mengakses playlist ini sebagai owner maupun collaborator"
+          );
         }
       } else {
-        throw error;
+        throw error; // kalau error lain misalnya NotFoundError, biarin lewat
       }
     }
   }
