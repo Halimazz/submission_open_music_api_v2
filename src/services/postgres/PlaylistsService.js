@@ -119,7 +119,6 @@ class PlaylistsService {
 
   async verifyPlaylistAccess(playlistId, userId) {
     try {
-      // coba cek apakah user adalah owner playlist
       await this.verifyPlaylistOwner(playlistId, userId);
     } catch (error) {
       // kalau bukan owner, cek apakah user adalah collaborator
